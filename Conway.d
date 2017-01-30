@@ -18,18 +18,18 @@ void life(){
 	for (uint clock=0; clock<maxcycles; clock++){
 		countNeighbors(xr,yr,a);
 		sire(xr,yr);
-		if (checkLarge(xr,a)){
+		if (checkFull(xr,a)){
 			writeln("Erweitern!");
-			ulong[] yn;
-			yn.length = yr.length*9;
-			copyLarger(yn,yr,a);
-			yr=yn;
-			a*=3;
+			enlarge(yr,a);
 			xr.length *= 9;
 		}
 	}
 }
 
+// Wendet Conways Regel an: xr ist Anzahl der Nachbarn
+// yr stellt den aktuellen Bestand dar
+// Zellen mit genau 3 Nachbarn werden bewohnt sein
+// bewohnte Zellen mit genau 2 Nachbarn bleiben bewohnt
 void sire(const ulong[] xr, ulong[] yr){
 	for (uint i=0; i<yr.length; ++i){
 		ulong x = xr[i];
@@ -39,6 +39,10 @@ void sire(const ulong[] xr, ulong[] yr){
 	}
 }
 
+// Zählt die Nachbarn (0 bis 8)
+// ya ist der Bestand
+// xr wird beschrieben
+// a ist Länge einer Zeile
 void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
 	xr[] = 0;
 	ulong y, y_, yl, yr;
@@ -47,7 +51,6 @@ void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
 		if (!y) continue;
 		assert( i%a );   // Kein Eintrag am linken Rand
 		assert((i+1)%a); //Kein Eintrag am rechten Rand
-		
 		y_ = (y << 3) + (y >> 3),
 		yl = y >> 60,
 		yr = y << 60; 
@@ -63,7 +66,9 @@ void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
 	}
 }
 
-bool checkLarge(ulong[] xr, const uint a){
+
+// Schaut, ob Werte an den vier Rändern stehen
+bool checkFull(const ulong[] xr, const uint a){
 	bool large = false;
 	for (uint i = 0; i<a;)
 		large = large || xr[i] || xr[$ - ++i];
@@ -72,13 +77,23 @@ bool checkLarge(ulong[] xr, const uint a){
 	return large;
 }
 
-void copyLarger(ulong[] yn, const ulong[] yr, const uint a){
-	uint i_n = a+ 3*a*21*a, i_r;
-	for (uint j=0; j< 21*a; ++j){
-		for (uint i=0; i<a ; ++i, ++i_n, ++i_r){
-			yn[i_n] = yr[i_r];
+
+// Vergrößert das Array um den Faktor 9
+// und schreibt den alten Inhalt in die Mitte des
+// 3x3 Rechtecks
+void enlarge(ref ulong[] y, const uint a)
+in { assert(y.length%a == 0); }
+body{
+	uint l = y.length;
+	y.length = 9*l;
+	for (uint i=0, j = 3*l+a, b=a; i<l;){
+		y[j] = y[i];
+		y[i] = 0;
+		if (++i-b) j++;
+		else {
+			j += 2*a+1;
+			b += a;
 		}
-		i_n += 2*a;
 	}
 }
 
@@ -106,12 +121,4 @@ unittest{
 	writeQuick(y,3);
 	assert(y==yo);
 }
-
-// Seitenlänge = a*21
-
-
-// x==3 = (x|y) & x >> 1 & ~x >> 2
-// 1001 = 9
-// 0100 = 4
-// 0010 = 2
 
