@@ -31,8 +31,7 @@ void life(){
 // Zellen mit genau 3 Nachbarn werden bewohnt sein
 // bewohnte Zellen mit genau 2 Nachbarn bleiben bewohnt
 void sire(const ulong[] xr, ulong[] yr){
-	for (uint i=0; i<yr.length; ++i){
-		ulong x = xr[i];
+	foreach (uint i, ulong x; xr){
 		yr[i] = x ? 
 			(yr[i]|x) & (x>>1) & (~x>>2) &  0x1249249249249249
 			: 0;
@@ -45,15 +44,14 @@ void sire(const ulong[] xr, ulong[] yr){
 // a ist Länge einer Zeile
 void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
 	xr[] = 0;
-	ulong y, y_, yl, yr;
 	for (uint i=a+1; i < xr.length-a-1; ++i){
-		y = ya[i];
+		ulong y = ya[i];
 		if (!y) continue;
 		assert( i%a );   // Kein Eintrag am linken Rand
 		assert((i+1)%a); //Kein Eintrag am rechten Rand
-		y_ = (y << 3) + (y >> 3),
-		yl = y >> 60,
-		yr = y << 60; 
+		ulong y_ = (y << 3) + (y >> 3),
+			  yl = y >> 60,
+			  yr = y << 60; 
 		xr[i-a] 	+= y + y_;
 		xr[i-a-1] 	+= yl;
 		xr[i-a+1] 	+= yr;
@@ -69,12 +67,11 @@ void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
 
 // Schaut, ob Werte an den vier Rändern stehen
 bool checkFull(const ulong[] xr, const uint a){
-	bool large = false;
 	for (uint i = 0; i<a;)
-		large = large || xr[i] || xr[$ - ++i];
+		if (xr[i] || xr[$ - ++i]) return true;
 	for (uint i= a; i<xr.length-1; i+=a)
-		large = large || xr[i] || xr[i+1];
-	return large;
+		if  (xr[i] || xr[i+1]) return true;
+	return false;
 }
 
 
@@ -85,16 +82,17 @@ void enlarge(ref ulong[] y, const uint a)
 in { assert(y.length%a == 0); }
 body{
 	uint l = y.length;
-	y.length = 9*l;
+	ulong[] yn ;
+	yn.length = 9*l;
 	for (uint i=0, j = 3*l+a, b=a; i<l;){
-		y[j] = y[i];
-		y[i] = 0;
+		yn[j] = y[i];
 		if (++i-b) j++;
 		else {
 			j += 2*a+1;
 			b += a;
 		}
 	}
+	y = yn;
 }
 
 void writeQuick(ulong[] x, const uint a){
