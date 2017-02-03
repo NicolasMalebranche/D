@@ -30,7 +30,7 @@ void life(){
 // yr stellt den aktuellen Bestand dar
 // Zellen mit genau 3 Nachbarn werden bewohnt sein
 // bewohnte Zellen mit genau 2 Nachbarn bleiben bewohnt
-void sire(const ulong[] xr, ulong[] yr){
+pure void sire(const ulong[] xr, ulong[] yr){
 	foreach (uint i, ulong x; xr){
 		yr[i] = x ? 
 			(yr[i]|x) & (x>>1) & (~x>>2) &  0x1249249249249249
@@ -42,7 +42,7 @@ void sire(const ulong[] xr, ulong[] yr){
 // ya ist der Bestand
 // xr wird beschrieben
 // a ist Länge einer Zeile
-void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
+pure void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
 	xr[] = 0;
 	for (uint i=a+1; i < xr.length-a-1; ++i){
 		ulong y = ya[i];
@@ -66,7 +66,7 @@ void countNeighbors(ulong[] xr, const ulong[] ya, const uint a){
 
 
 // Schaut, ob Werte an den vier Rändern stehen
-bool checkFull(const ulong[] xr, const uint a){
+pure bool checkFull(const ulong[] xr, const uint a){
 	for (uint i = 0; i<a;)
 		if (xr[i] || xr[$ - ++i]) return true;
 	for (uint i= a; i<xr.length-1; i+=a)
@@ -78,7 +78,7 @@ bool checkFull(const ulong[] xr, const uint a){
 // Vergrößert das Array um den Faktor 9
 // und schreibt den alten Inhalt in die Mitte des
 // 3x3 Rechtecks
-void enlarge(ref ulong[] y, const uint a)
+pure void enlarge(ref ulong[] y, const uint a)
 in { assert(y.length%a == 0); }
 body{
 	uint l = y.length;
