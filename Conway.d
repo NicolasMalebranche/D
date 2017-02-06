@@ -33,7 +33,7 @@ void life(){
 void sire(const ulong[] xr, ulong[] yr){
 	foreach (uint i, ulong x; xr){
 		yr[i] = x ? 
-			(yr[i]|x) & (x>>1) & (~x>>2) &  0x1249249249249249
+			(yr[i]|x) & x>>1 & ~x>>2 & 0x1249249249249249
 			: 0;
 	}
 }
@@ -102,10 +102,9 @@ void createEmpty(const uint min_s, ref ulong[] yr, ref uint a){
 }
 
 // Baut ein quadratisches Feld aus einem rechteckigen boolschen Array 
-// Funktioniert noch nicht richtig
 void createFromBool(const bool[] b, const uint bline, 
 					ref ulong[] yr, ref uint a){
-	if (b.length%bline) {} //Fehler werfen
+	if (b.length%bline) {assert(0);} // Fehler werfen
 	const uint a1 = b.length/bline;
 	createEmpty(a1<bline?bline:a1, yr, a);
 	uint lr = (21*a-bline)/2,
@@ -113,10 +112,10 @@ void createFromBool(const bool[] b, const uint bline,
 	for (uint i=0, kk; i<a1; i++){
 		for (uint j=0; j<bline; j++){
 			kk = a*(ou+i) + (lr+j)/21;
-			if (b[i*bline+j]) yr[kk]++;
 			yr[kk]<<=3;
+			if (b[i*bline+j]) yr[kk]++;
 		}
-		yr[kk] <<= (lr%21)*3;
+		yr[kk] <<= (21-(lr+bline)%21)*3;
 	}
 }
 
@@ -126,7 +125,7 @@ void shiftLeft(uint i, ulong[] x, const uint a){
 	immutable uint idiv = i/21, im = 3*(i%21);
 	for (uint j=0, d=idiv, na=a; j<x.length;){
 		x[j] = d<na ? x[d] << im : 0;
-		if (++d<na) x[j] |= x[d] >> (63-im);
+		if (++d<na) x[j] |= x[d] >> 63-im;
 		x[j] &= 0x7FFFFFFFFFFFFFFF;
 		if (++j==na) na+=a;
 	}
@@ -140,7 +139,7 @@ void shiftRight(uint i, ulong[] x, const uint a){
 	for (int j = x.length, d=j-idiv-1, na = j-a; j--;){
 		// writeln("j=",j," d=",d);
 		x[j] = d<na ? 0 : x[d] >> im;
-		if (d-->na) x[j] |= x[d] << (63-im);
+		if (d-->na) x[j] |= x[d] << 63-im;
 		x[j] &= 0x7FFFFFFFFFFFFFFF;
 		if (j==na) na -= a;	
 	}
@@ -166,8 +165,6 @@ unittest{
 	shiftLeft(1,x,3);
 	shiftRight(1,x,3);
 	assert (x==x1);
-	
-	writeQuick(x,3);
 	shiftLeft(21,x,3);
 	shiftRight(21,x1,3);
 	assert(x ==[8*8*8*8*8*8*8*8*8,	0x1249249249249249,0,
@@ -176,7 +173,7 @@ unittest{
 				0, 1+8+8*8*8,	8*8*8*8*8*8*8*8*8]);
 }
 
-
+// Testet die fromBool Methode
 unittest{
 	bool[ ] b =[0,1,1,
 				1,1,0,
@@ -184,12 +181,13 @@ unittest{
 	ulong[] y;
 	uint a;
 	createFromBool(b,3,y,a);
-	writeln("Erzeugungstest mit a=",a);
-	writeQuick(y,a);
+	// writeln("Erzeugungstest mit a=",a);
+	// writeQuick(y,a);
 	b = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
 	createFromBool(b,b.length,y,a);
-	writeln("Erzeugungstest mit a=",a);
-	writeQuick(y,a);
+	foreach (uint i, ulong v;y){
+		if (v%2) assert(y[i+1]>>60); 
+	}
 }
 
 unittest{
