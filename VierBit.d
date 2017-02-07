@@ -8,20 +8,44 @@ void main()
 
 void life(){
 	writeln("Hier ist Conways Spiel des Lebens  (4bit)!");
-	ulong[] x;
-	uint a = 5;
-	x.length = a*a*arlength;
+	ulong[] x,x1;
+	uint a ;
+	createFromBool(f_pentomino,3,x,a);
 	writeln("Start. a=",a,", Arraygroesse=", x.length);
+	writeQuick(x,a);
+	x1=x.dup;
 	uint maxcycles = 2000;
 	for (uint clock=0; clock<maxcycles; clock++){
+		writeln(clock,",");
 		countNeighbors(x,a);
+		countNeighbors2(x1,a);
+		if (x!=x1) {
+		writeQuick(x,a);writeln;
+		ar [] check =x.dup;
+		check[] = x1[]-x[];
+		writeQuick(check,a);}
+		assert(x==x1);
 		sire(x);
+		sire(x1);
+		
 		if (checkFull(x,a)){
 			writeln("Erweitern!");
+		
 			enlarge(x,a);
+			enlarge(x1,a);
+			a*=3;
 		}
 	}
 }
+
+// Beispiel-Startkonfigurationen
+immutable bool[]  
+ f_pentomino = [0,1,1,
+				1,1,0,
+				0,1,0],
+ doppel_U= [1,1,1,0,1,1,1,
+			1,0,0,0,0,0,1,
+			1,1,1,0,1,1,1];
 
 // Felder in Conways Spiel des Lebens werden bitwise gespeichert
 // ein Feld entspricht 4 Bits
@@ -45,8 +69,8 @@ static assert(X+Y+1==0);
 // anders ausgedrückt: 5,6,7 gehen auf 1, die andern auf 0
 void sire(ar[] x){
 	foreach (ind i,ar u ; x) {
-		// if (u)
-		x[i] = (u|u>>1) & u>>2 & ~u>>3 & Y;
+		if (u)
+			x[i] = (u|u>>1) & u>>2 & ~u>>3 & Y;
 	}
 }
 
@@ -75,18 +99,25 @@ void countNeighbors(ar[] x, const ind a){
 	}
 }
 
+// Alternativer Nachbarzähler
 void countNeighbors2(ar[] x,  const ind a){
 	assert (x.length % a ==0);
 	ar u, left;
-	for (ind i=a+1; i < x.length-a-1; ++i){
-		u = x[i] & Y;
-		//if (!u) continue;
+	for (ind i=1; i < x.length-a; ++i){
 		x[i] 	+= x[i+a] << 1;
+		u = x[i] & Y;
 		x[i+a]	+= u << 1;
 		u   	+= x[i];
 		assert (u == (u&X));
 		x[i-1] 	+= u >> arbits-4;
-		x[i] 	+= (u<<4) + (u>>4) + (left << arbits-4);
+		x[i] 	+= (u<<4) + (u>>4); 
+		x[i]	+= (left << arbits-4);
+		left = u;
+	}
+	for (ind i=x.length-a; i<x.length; ++i){
+		u = ((x[i]&Y) << 1) +x[i];
+		x[i] += (u<<4) + (u>>4) + (left<< arbits-4); 
+		x[i-1] += u >> arbits-4;
 		left = u;
 	}
 }
@@ -96,9 +127,9 @@ void countNeighbors2(ar[] x,  const ind a){
 pure bool checkFull(const ar[] xr, const ind a){
 	for (ind i = 0; i<a;)
 		if (xr[i] || xr[$ - ++i]) return true;
-	for (ind i= a; i<xr.length-1; i+=a)
-		if  (xr[i] || xr[i+1]) return true;
-		//if  (xr[i] & 0xF || xr[i+1] >> arbits-4) return true;
+	for (ind i= a; i<xr.length; i+=a)
+		if  (xr[i] || xr[i-1]) return true;
+		//if (xr[i] >> arbits-4 || xr[i-1] << arbits-4) return true;
 	return false;
 }
 
@@ -187,6 +218,7 @@ void writeQuick(const ulong[] x, const uint a){
 //--------------------------------------------------------------
 // Testet, ob shiftLeft und shiftRight funktionieren
 unittest{
+	writeln("Shift Unittest");
 	ulong[] x =[0x10001  ,	0x100000000,	Y,
 				0x10001  ,	0x100000000,	Y];
 	ulong [] x1 = x.dup;
@@ -218,6 +250,7 @@ unittest{
 
 // Testet die fromBool Methode
 unittest{
+	writeln("fromBool Unittest");
 	bool[ ] b =[0,1,1,
 				1,1,0,
 				0,1,0];
@@ -234,7 +267,7 @@ unittest{
 }
 
 unittest{
-	// writeln("Blinker Unittest");
+	writeln("Blinker Unittest");
 	bool[] b = [0,1,0,
 				0,1,0,
 				0,1,0];
@@ -256,18 +289,13 @@ unittest{
 
 unittest{
 	writeln("Doppel U unittest");
-	bool[] b = [1,1,1,0,1,1,1,
-				1,0,0,0,0,0,1,
-				1,1,1,0,1,1,1];
 	ar[] x,x1;
 	ind a;
-	createFromBool(b,7,x,a);
+	createFromBool(doppel_U,7,x,a);
 	x1 = x.dup;
 	bool isN;
 	for (int i=0; i<54; i++){
 		isN = false;
-		writeln("i= ",i);
-		
 		foreach (ar u; x) isN = isN || u;
 		assert(isN);
 		countNeighbors(x,a);
