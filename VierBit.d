@@ -74,34 +74,23 @@ void countNeighbors(ar[] x, const ind a){
 		x[i+a+1]+= yr;		
 	}
 }
-/*
+
 void countNeighbors2(ar[] x,  const ind a){
 	assert (x.length % a ==0);
+	ar u, left;
 	for (ind i=a+1; i < x.length-a-1; ++i){
-		ar u = x[i] & Y;
+		u = x[i] & Y;
 		//if (!u) continue;
-		writeln("i= ",i);
-		assert(x[i] == (x[i]&Y) + ((x[i-1]+x[i-a-1]&Y)<<arbits-3));
-		assert(x[i+1] == ((x[i-a+1]&Y)<<1) +(x[i+1]&Y));
-		assert(x[i+a]== (x[i+a]&Y));
 		x[i] 	+= x[i+a] << 1;
-		x[i]	+= x[i+a-1] << arbits-3;
-		// x[i+a] 	+= u << 1;
-		
-		u   += x[i]; 
-		ar v = (x[i]&0x0EEEEEEEEEEEEEE0) + (x[i]&Y)<<1;
-		x[i] += (u<<4) + (u>>4) ;
-		x[i] += x[i+1] >> arbits-5;
-		x[i] += x[i+1+a]>>arbits-5;
-		
-		ar[9] y = [ x[i-a-1], x[i-a], x[i-a+1], x[i-1],x[i],x[i+1],x[i+a-1] ,x[i+a],x[i+a+1]];
-		y[] &= Y;
-		foreach (ar q;y) q<<=1;
-		ar test = (y[0]+y[3]+y[6] << arbits-4 ) + y[1] +(y[4]>>1) + y[6] + (y[2]+y[5]+y[7]>>arbits-4) ;
-		assert(x[i] == test);
+		x[i+a]	+= u << 1;
+		u   	+= x[i];
+		assert (u == (u&X));
+		x[i-1] 	+= u >> arbits-4;
+		x[i] 	+= (u<<4) + (u>>4) + (left << arbits-4);
+		left = u;
 	}
 }
-*/
+
 
 // Schaut, ob Werte an den vier Rändern stehen
 pure bool checkFull(const ar[] xr, const ind a){
@@ -263,5 +252,39 @@ unittest{
 	sire(x);
 	// writeQuick(x,3);
 	assert(x==xo);
+}
+
+unittest{
+	writeln("Doppel U unittest");
+	bool[] b = [1,1,1,0,1,1,1,
+				1,0,0,0,0,0,1,
+				1,1,1,0,1,1,1];
+	ar[] x,x1;
+	ind a;
+	createFromBool(b,7,x,a);
+	x1 = x.dup;
+	bool isN;
+	for (int i=0; i<54; i++){
+		isN = false;
+		writeln("i= ",i);
+		
+		foreach (ar u; x) isN = isN || u;
+		assert(isN);
+		countNeighbors(x,a);
+		countNeighbors2(x1,a);
+		assert(x==x1);
+		sire(x);
+		sire(x1);
+		if (checkFull(x,a)){
+			writeln("Erweitern!");
+			enlarge(x,a);
+			enlarge(x1,a);
+			a *= 3;
+		}
+	}
+	isN = false;
+		foreach (ar u; x) isN = isN || u;
+	assert(!isN);
+	
 }
 
