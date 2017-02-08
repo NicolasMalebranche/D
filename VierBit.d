@@ -12,27 +12,27 @@ void life(){
 	uint a ;
 	createFromBool(f_pentomino,3,x,a);
 	writeln("Start. a=",a,", Arraygroesse=", x.length);
-	writeQuick(x,a);
-	x1=x.dup;
+	//writeQuick(x,a);
+	//x1=x.dup;
 	uint maxcycles = 2000;
 	for (uint clock=0; clock<maxcycles; clock++){
-		writeln(clock,",");
+		//writeln(clock,",");
 		countNeighbors(x,a);
-		countNeighbors3(x1,a);
-		if (x!=x1) {
+		//countNeighbors3(x1,a);
+		/*if (x!=x1) {
 		writeQuick(x,a);writeln;
 		ar [] check =x.dup;
 		check[] = x1[]-x[];
 		writeQuick(check,a);}
-		assert(x==x1);
+		assert(x==x1);*/
 		sire(x);
-		sire(x1);
+		//sire(x1);
 		
 		if (checkFull(x,a)){
 			writeln("Erweitern!");
 		
 			enlarge(x,a);
-			enlarge(x1,a);
+			//enlarge(x1,a);
 			a*=3;
 		}
 	}
@@ -60,7 +60,8 @@ enum ind arbits = ar.sizeof * 8;
 enum ind arlength = ar.sizeof * 2;
 enum ar Y = 0x1111111111111111; // nur die rechten Bits sind 1
 enum ar X = 0xEEEEEEEEEEEEEEEE; // nur die linken Bits sind 1
-static assert(X+Y+1==0);
+static assert(Y*0xF+1==0);
+
 
 // Wendet Conways Regel an: xr ist Anzahl der Nachbarn
 // x stellt den aktuellen Bestand dar
@@ -79,66 +80,29 @@ void sire(ar[] x){
 // x ist der Bestand
 // a ist Länge einer Zeile
 void countNeighbors(ar[] x, const ind a){
-	for (ind i=a+1, max=x.length-a-1; i < max; ++i){
-		ar y = (x[i] & Y) << 1;
-		if (!y) continue;
-		//assert( i%a );   // Kein Eintrag am linken Rand
-		//assert((i+1)%a); //Kein Eintrag am rechten Rand
-		ar y_ = (y << 4) + (y >> 4),
-			  yl = y >> arbits-4,
-			  yr = y << arbits-4; 
+	ind i = a, max = x.length-a;
+	ar 	y = (x[i] & Y) << 1,
+		y_ = (y << 4) + (y >> 4),
+		yl = y >> arbits-4,
+		yr = y << arbits-4;
+	goto Einsprung;
+	for (; i-max ; ++i){
+		if (!x[i]) continue;
+		y = (x[i] & Y) << 1,
+		y_ = (y << 4) + (y >> 4),
+		yl = y >> arbits-4,
+		yr = y << arbits-4;
+		x[i-a-1] += yl;		
+		Einsprung:
 		x[i-a] 	+= y + y_;
-		x[i-a-1]+= yl;
 		x[i-a+1]+= yr;
-		x[i]   	+= y_;
 		x[i-1] 	+= yl;
+		x[i]   	+= y_;
 		x[i+1] 	+= yr;
- 		x[i+a] 	+= y + y_;
 		x[i+a-1]+= yl;
-		x[i+a+1]+= yr;		
-	}
-}
-
-// Alternativer Nachbarzähler
-void countNeighbors2(ar[] x,  const ind a){
-	assert (x.length % a ==0);
-	ar u, left;
-	for (ind i=1; i < x.length-a; ++i){
-		x[i] 	+= x[i+a] << 1;
-		u = x[i] & Y;
-		x[i+a]	+= u << 1;
-		u   	+= x[i];
-		assert (u == (u&X));
-		x[i-1] 	+= u >> arbits-4;
-		x[i] 	+= (u<<4) + (u>>4); 
-		x[i]	+= (left << arbits-4);
-		left = u;
-	}
-	for (ind i=x.length-a; i<x.length; ++i){
-		u = ((x[i]&Y) << 1) +x[i];
-		x[i] += (u<<4) + (u>>4) + (left<< arbits-4); 
-		x[i-1] += u >> arbits-4;
-		left = u;
-	}
-}
-
-void countNeighbors3(ar[] x, const ind a){
-	assert (x.length % a ==0);
-	for (ind i,j=0;i!=x.length-1;j++){
-		x[i=j+a] += x[j] << 1;
-		for (; i<x.length-a; i+=a){
-			ar u = (x[i] & Y)<< 1;
-			x[i-a] += u;
-			x[i+a] += u;
-		}
-		x[i-a] += (x[i] & Y) << 1; 
-	}
-	ar left, u;
-	for (ind i=1; i<x.length-1; i++){
-		u = x[i] + (x[i]&Y);
-		x[i-1]+= u >> arbits-4;
-		x[i]  += (u<<4) + (u>>4) + left;
-		left = u << arbits-4;
+ 		x[i+a] 	+= y + y_;
+		if (i==max) break;
+		x[i+a+1] += yr;	
 	}
 }
 
@@ -148,8 +112,8 @@ pure bool checkFull(const ar[] xr, const ind a){
 	for (ind i = 0; i<a;)
 		if (xr[i] || xr[$ - ++i]) return true;
 	for (ind i= a; i<xr.length; i+=a)
-		if  (xr[i] || xr[i-1]) return true;
-		//if (xr[i] >> arbits-4 || xr[i-1] << arbits-4) return true;
+		if (xr[i] || xr[i-1])
+		if (xr[i] >> arbits-4 || xr[i-1] << arbits-4) return true;
 	return false;
 }
 
@@ -309,29 +273,19 @@ unittest{
 
 unittest{
 	writeln("Doppel U unittest");
-	ar[] x,x1;
+	ar[] x;
 	ind a;
 	createFromBool(doppel_U,7,x,a);
-	x1 = x.dup;
 	bool isN;
 	for (int i=0; i<54; i++){
 		isN = false;
 		foreach (ar u; x) isN = isN || u;
 		assert(isN);
 		countNeighbors(x,a);
-		countNeighbors3(x1,a);
-		if (x!= x1) {
-			writeQuick(x1,a);
-			writeln;
-			writeQuick(x,a);
-			}
-		assert(x==x1);
 		sire(x);
-		sire(x1);
 		if (checkFull(x,a)){
 			writeln("Erweitern!");
 			enlarge(x,a);
-			enlarge(x1,a);
 			a *= 3;
 		}
 	}
