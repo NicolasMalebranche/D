@@ -8,7 +8,7 @@ void main()
 
 void life(){
 	writeln("Hier ist Conways Spiel des Lebens  (4bit)!");
-	world w = createFromBool(f_pentomino,3);
+	world w = createFromBool(f_pentomino);
 	writeln("Start. a=",w.a,", Arraygroesse=", w.x.length);
 	//writeQuick(x,a);
 	//x1=x.dup;
@@ -35,13 +35,24 @@ void life(){
 }
 
 // Beispiel-Startkonfigurationen
-immutable bool[]  
- f_pentomino = [0,1,1,
+struct bool_world {
+	bool [] b;
+	ind a;
+}
+	
+immutable bool_world 
+ blinker = { a : 3,
+			b: [0,1,0,
+				0,1,0,
+				0,1,0]  }, 
+ f_pentomino = { a : 3,
+			b: [0,1,1,
 				1,1,0,
-				0,1,0],
- doppel_U= [1,1,1,0,1,1,1,
+				0,1,0]  },
+ doppel_U= { a : 7,
+		b: [1,1,1,0,1,1,1,
 			1,0,0,0,0,0,1,
-			1,1,1,0,1,1,1];
+			1,1,1,0,1,1,1] };
 
 // Felder in Conways Spiel des Lebens werden bitwise gespeichert
 // ein Feld entspricht 4 Bits
@@ -80,6 +91,7 @@ void sire(world w){
 // x ist der Bestand
 // a ist Länge einer Zeile
 void countNeighbors(world w){
+	assert (w.x.length > w.a);
 	const ind a = w.a;
 	ind i = a, max = w.x.length-a;
 	ar 	y = (w.x[i] & Y) << 1,
@@ -148,19 +160,19 @@ world createEmpty(const ind min_s){
 }
 
 // Baut ein quadratisches Feld aus einem rechteckigen boolschen Array 
-world createFromBool(const bool[] b, const uint bline){
-	if (b.length%bline) {assert(0);} // Fehler werfen
-	const uint a1 = b.length/bline;
-	world w = createEmpty(a1<bline?bline:a1);
-	uint lr = (arlength*w.a-bline)/2,
+world createFromBool(const bool_world bw){
+	if (bw.b.length%bw.a) {assert(0);} // Fehler werfen
+	const uint a1 = bw.b.length/bw.a;
+	world w = createEmpty(a1<bw.a?bw.a:a1);
+	uint lr = (arlength*w.a-bw.a)/2,
 		 ou = (w.x.length/w.a - a1)/2;
 	for (uint i=0, kk; i<a1; i++){
-		for (uint j=0; j<bline; j++){
+		for (uint j=0; j<bw.a; j++){
 			kk = w.a*(ou+i) + (lr+j)/arlength;
 			w.x[kk]<<=4;
-			if (b[i*bline+j]) w.x[kk]++;
+			if (bw.b[i*bw.a+j]) w.x[kk]++;
 		}
-		w.x[kk] <<= (arlength-(lr+bline)%arlength)*4;
+		w.x[kk] <<= (arlength-(lr+bw.a)%arlength)*4;
 	}
 	return w;
 }
@@ -192,7 +204,7 @@ void shiftRight(uint i, world w){
 // Schreibt das Feld auf die Standardausgabe
 void writeQuick(const world w){
 	for (uint i=0;i<w.x.length;i+=w.a){
-		const ulong[] line = w.x[i .. i+w.a];
+		const ar[] line = w.x[i .. i+w.a];
 		if (arlength == 16)
 		writefln("%(%016x%)", line);
 		else 
@@ -238,14 +250,10 @@ unittest{
 // Testet die fromBool Methode
 unittest{
 	writeln("fromBool Unittest");
-	bool[ ] b =[0,1,1,
-				1,1,0,
-				0,1,0];
-	world w = createFromBool(b,3);
-	// writeln("Erzeugungstest mit a=",w.a);
-	// writeQuick(w);
-	b = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-	w = createFromBool(b,b.length);
+	bool_world bw = {
+		b : [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]};
+	bw.a = bw.b.length;
+	world w = createFromBool(bw);
 	foreach (uint i, ulong v;w.x){
 		if (v%2) assert(w.x[i+1]>>60); 
 	}
@@ -253,10 +261,7 @@ unittest{
 
 unittest{
 	writeln("Blinker Unittest");
-	bool[] b = [0,1,0,
-				0,1,0,
-				0,1,0];
-	world w = createFromBool(b,3);
+	world w = createFromBool(blinker);
 	ar[] xo = w.x.dup;
 	// writeQuick(w);
 	// writeln("");
@@ -272,7 +277,7 @@ unittest{
 
 unittest{
 	writeln("Doppel U unittest");
-	world w = createFromBool(doppel_U,7);
+	world w = createFromBool(doppel_U);
 	bool isN;
 	for (int i=0; i<54; i++){
 		isN = false;
