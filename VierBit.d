@@ -18,7 +18,7 @@ void life(){
 	for (uint clock=0; clock<maxcycles; clock++){
 		writeln(clock,",");
 		countNeighbors(x,a);
-		countNeighbors2(x1,a);
+		countNeighbors3(x1,a);
 		if (x!=x1) {
 		writeQuick(x,a);writeln;
 		ar [] check =x.dup;
@@ -82,8 +82,8 @@ void countNeighbors(ar[] x, const ind a){
 	for (ind i=a+1, max=x.length-a-1; i < max; ++i){
 		ar y = (x[i] & Y) << 1;
 		if (!y) continue;
-		assert( i%a );   // Kein Eintrag am linken Rand
-		assert((i+1)%a); //Kein Eintrag am rechten Rand
+		//assert( i%a );   // Kein Eintrag am linken Rand
+		//assert((i+1)%a); //Kein Eintrag am rechten Rand
 		ar y_ = (y << 4) + (y >> 4),
 			  yl = y >> arbits-4,
 			  yr = y << arbits-4; 
@@ -119,6 +119,26 @@ void countNeighbors2(ar[] x,  const ind a){
 		x[i] += (u<<4) + (u>>4) + (left<< arbits-4); 
 		x[i-1] += u >> arbits-4;
 		left = u;
+	}
+}
+
+void countNeighbors3(ar[] x, const ind a){
+	assert (x.length % a ==0);
+	for (ind i,j=0;i!=x.length-1;j++){
+		x[i=j+a] += x[j] << 1;
+		for (; i<x.length-a; i+=a){
+			ar u = (x[i] & Y)<< 1;
+			x[i-a] += u;
+			x[i+a] += u;
+		}
+		x[i-a] += (x[i] & Y) << 1; 
+	}
+	ar left, u;
+	for (ind i=1; i<x.length-1; i++){
+		u = x[i] + (x[i]&Y);
+		x[i-1]+= u >> arbits-4;
+		x[i]  += (u<<4) + (u>>4) + left;
+		left = u << arbits-4;
 	}
 }
 
@@ -299,7 +319,12 @@ unittest{
 		foreach (ar u; x) isN = isN || u;
 		assert(isN);
 		countNeighbors(x,a);
-		countNeighbors2(x1,a);
+		countNeighbors3(x1,a);
+		if (x!= x1) {
+			writeQuick(x1,a);
+			writeln;
+			writeQuick(x,a);
+			}
 		assert(x==x1);
 		sire(x);
 		sire(x1);
