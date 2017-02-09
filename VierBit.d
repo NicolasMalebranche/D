@@ -65,6 +65,8 @@ struct world {
 	ind a;   // Länge einer Zeile von x
 }
 
+enum border : uint {up = 0xF000, down = 0xF00, 
+	left = 0xF0, right = 0xF, all = 0xFFFF, none = 0} ;
 
 // Wendet Conways Regel an: xr ist Anzahl der Nachbarn
 // x stellt den aktuellen Bestand dar
@@ -114,7 +116,7 @@ void countNeighbors(world w){
 }
 
 
-// Schaut, ob Werte an den vier Rändern stehen
+// Schaut, ob Werte an einem der vier Rändern stehen
 pure bool checkFull(const world w){
 	for (ind i = 0; i<w.a;)
 		if (w.x[i] || w.x[$ - ++i]) return true;
@@ -122,6 +124,22 @@ pure bool checkFull(const world w){
 		if (w.x[i] || w.x[i-1])
 		if (w.x[i] >> arbits-4 || w.x[i-1] << arbits-4) return true;
 	return false;
+}
+
+// Schaut, ob Werte an den vier Rändern stehen
+pure border checkBorder(const world w){
+	border res = border.none;
+	foreach (u; w.x[0..w.a]) 
+		if (u) { res |= border.up; break; } 
+	foreach (u; w.x[$-w.a .. $]) 
+		if (u) { res |= border.down; break; } 
+	for (ind i=0; i<w.x.length; i+=w.a)
+		if (w.x[i] && w.x[i] >> arbits-4){
+			res |= border.left; break; }
+	for (ind i=w.a-1; i<w.x.length; i+=w.a)
+		if (w.x[i] && w.x[i] << arbits-4){
+			res |= border.right; break; }
+	return res;
 }
 
 // Vergrößert das Array um den Faktor 9
@@ -142,6 +160,34 @@ body{
 	}
 	w.x = yn;
 	w.a = 3*a;
+}
+
+// Vergrößert an den Rändern, wie angegeben
+// wenn bord==border.all, selbes Ergebnis wie oben
+void enlarge(border bord, ref world w){
+	assert(w.x.length%w.a == 0); 
+	ind q, lr = 1, ud = 1;
+	if (bord & border.left)   lr++ , q = w.a ; 
+	if (bord & border.right)  lr++ ;
+	if (bord & border.up)     ud++ , q += w.x.length*lr;
+	if (bord & border.down)   ud++ ;
+	world nw = { a : w.a*lr,
+		x : new ar [w.x.length * lr * ud]  };
+	for (ind i=0; i<w.x.length; i+=w.a,q+=nw.a)
+		nw.x[q .. q+w.a] = w.x[i .. i+w.a];
+	w = nw;
+}
+
+// Schreibt Nullen auf die angegebenen Feldränder
+void cleanbord(border bord, world w){
+	if (bord & border.up)   w.x[0 .. w.a] = 0;
+	if (bord & border.down) w.x[$-w.a .. $] = 0;
+	if (bord & border.left) 
+		for (ind i = 0; i<w.x.length; i+=w.a) 
+			w.x[i] &= -1 >>4;
+	if (bord & border.right) 
+		for (ind i = w.a-1; i<w.x.length; i+=w.a) 
+			w.x[i] &= -1 <<4;
 }
 
 // Erzeugt ein leeres Spielfeld mit mindestens min_s Seitenlänge
@@ -291,7 +337,13 @@ unittest{
 		countNeighbors(w);
 		sire(w);
 		if (checkFull(w)){
+			world w1 = w;
+			enlarge(border.none,w1);
+			assert(w1 == w);
 			enlarge(w);
+			enlarge(border.up + border.down, w1);
+			enlarge(border.left + border.right,w1);
+			assert(w1 == w);
 		}
 	}
 	isN = false;
