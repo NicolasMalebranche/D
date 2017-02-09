@@ -16,15 +16,7 @@ void life(){
 	for (uint clock=0; clock<maxcycles; clock++){
 		//writeln(clock,",");
 		countNeighbors(w);
-		//countNeighbors3(x1,a);
-		/*if (x!=x1) {
-		writeQuick(x,a);writeln;
-		ar [] check =x.dup;
-		check[] = x1[]-x[];
-		writeQuick(check,a);}
-		assert(x==x1);*/
 		sire(w);
-		//sire(x1);
 		
 		if (checkFull(w)){
 			writeln("Erweitern!");
@@ -90,10 +82,12 @@ void sire(world w){
 // Zählt die Nachbarn (0 bis 8)
 // x ist der Bestand
 // a ist Länge einer Zeile
+// Korrektheit ist nur garantiert,  
+// wenn die Bits am Rand 0 sind
 void countNeighbors(world w){
 	assert (w.x.length > w.a);
-	const ind a = w.a;
-	ind i = a, max = w.x.length-a;
+	const ind a = w.a, max = w.x.length-a;
+	ind i = a;
 	ar 	y = (w.x[i] & Y) << 1,
 		y_ = (y << 4) + (y >> 4),
 		yl = y >> arbits-4,
@@ -114,7 +108,7 @@ void countNeighbors(world w){
 		w.x[i+1]   += yr;
 		w.x[i+a-1] += yl;
  		w.x[i+a]   += y + y_;
-		if (i==max) break;
+		if (i == max-1) break;
 		w.x[i+a+1] += yr;	
 	}
 }
@@ -257,6 +251,17 @@ unittest{
 	foreach (uint i, ulong v;w.x){
 		if (v%2) assert(w.x[i+1]>>60); 
 	}
+}
+
+unittest{
+	writeln("Kleine Welt Unittest");
+	ar m = 0x1011010;
+	world w = {x: [0,m,0] ,a:1};
+	countNeighbors(w);
+	assert(w.x[1]+m == w.x[0]&&w.x[0]==w.x[2]);
+	w.x= [0,m = Y >> 8 << 4,0];
+	countNeighbors(w);
+	assert(w.x[1]+m == w.x[0]&&w.x[0]==w.x[2]);
 }
 
 unittest{
