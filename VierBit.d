@@ -202,12 +202,12 @@ world createEmpty(const ind min_s){
 // Baut ein quadratisches Feld aus einem rechteckigen boolschen Array 
 world createFromBool(const bool_world bw){
 	if (bw.b.length%bw.a) {assert(0);} // Fehler werfen
-	const uint a1 = bw.b.length/bw.a;
+	const ind a1 = bw.b.length/bw.a;
 	world w = createEmpty(a1<bw.a?bw.a:a1);
-	uint lr = (arlength*w.a-bw.a)/2,
-		 ou = (w.x.length/w.a - a1)/2;
-	for (uint i=0, kk; i<a1; i++){
-		for (uint j=0; j<bw.a; j++){
+	ind lr = (arlength*w.a-bw.a)/2,
+	    ou = (w.x.length/w.a - a1)/2;
+	for (ind i=0, kk; i<a1; i++){
+		for (ind j=0; j<bw.a; j++){
 			kk = w.a*(ou+i) + (lr+j)/arlength;
 			w.x[kk]<<=4;
 			if (bw.b[i*bw.a+j]) w.x[kk]++;
@@ -218,9 +218,9 @@ world createFromBool(const bool_world bw){
 }
 
 // Schiebt das ganze Feld um i nach links
-void shiftLeft(uint i, world w){
+void shiftLeft(ind i, world w){
 	assert (w.x.length % w.a ==0);
-	immutable uint idiv = i/arlength, im = 4*(i%arlength);
+	immutable ind idiv = i/arlength, im = 4*(i%arlength);
 	for (ind j=0, d=idiv, na=w.a; j<w.x.length;){
 		w.x[j] = d<na ? w.x[d] << im : 0;
 		if (++d<na && im) w.x[j] |= w.x[d] >> arbits-im;
@@ -230,10 +230,10 @@ void shiftLeft(uint i, world w){
 
 
 // Schiebt das ganze Feld um i nach rechts
-void shiftRight(uint i, world w){
+void shiftRight(ind i, world w){
 	assert (w.x.length % w.a ==0);
-	immutable uint idiv = i/arlength, im = 4*(i%arlength);
-	for (int j = w.x.length, d=j-idiv-1, na = j-w.a; j--;){
+	immutable ind idiv = i/arlength, im = 4*(i%arlength);
+	for (ind j = w.x.length, d=j-idiv-1, na = j-w.a; j--;){
 		w.x[j] = d<na ? 0 : w.x[d] >> im;
 		if (d-->na && im) w.x[j] |= w.x[d] << arbits-im;
 		if (j==na) na -= w.a;	
@@ -243,7 +243,7 @@ void shiftRight(uint i, world w){
 
 // Schreibt das Feld auf die Standardausgabe
 void writeQuick(const world w){
-	for (uint i=0;i<w.x.length;i+=w.a){
+	for (ind i=0;i<w.x.length;i+=w.a){
 		const ar[] line = w.x[i .. i+w.a];
 		if (arlength == 16)
 		writefln("%(%016x%)", line);
