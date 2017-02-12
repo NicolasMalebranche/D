@@ -17,11 +17,10 @@ void life(){
 		//writeln(clock,",");
 		countNeighbors(w);
 		sire(w);
-		
-		if (checkFull(w)){
-			writeln("Erweitern!");
-		
-			enlarge(w);
+		border fu = checkBorder(w);
+		if (fu){
+			writeln("Erweitern! ");
+			enlarge(fu,w);
 		}
 	}
 }
