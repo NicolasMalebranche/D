@@ -232,7 +232,7 @@ void shiftLeft(ind i, world w){
 void shiftRight(ind i, world w){
 	assert (w.x.length % w.a ==0);
 	immutable ind idiv = i/arlength, im = 4*(i%arlength);
-	for (ind j = w.x.length, d=j-idiv-1, na = j-w.a; j--;){
+	for (int j = w.x.length, d=j-idiv-1, na = j-w.a; j--;){
 		w.x[j] = d<na ? 0 : w.x[d] >> im;
 		if (d-->na && im) w.x[j] |= w.x[d] << arbits-im;
 		if (j==na) na -= w.a;	
